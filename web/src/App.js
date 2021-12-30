@@ -1,72 +1,202 @@
-import TextField from "@material-ui/core/TextField"
-import React, { useEffect, useRef, useState } from "react"
-import io from "socket.io-client"
-import "./App.css"
+import TextField from "@material-ui/core/TextField";
+import React, { useEffect, useRef, useState } from "react";
+import io from "socket.io-client";
+import axios from "axios";
+import {
+  Container,
+  Row,
+  Col,
+  Form,
+  ButtonGroup,
+  Button,
+  Input,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from "reactstrap";
+import "./App.css";
 
 function App() {
-	const [ state, setState ] = useState({ message: "", name: "" })
-	const [ chat, setChat ] = useState([])
+  const [state, setState] = useState({ message: "", name: "randomUser" });
+  const [chat, setChat] = useState([]);
+  const [usernameModalState, setUsernameModalState] = useState(true);
+  const [newRoomModalState, setNewRoomModalState] = useState(false);
 
-	const socketRef = useRef()
+  const [currentRoom, setCurrentRoom] = useState("home");
+  const [rooms, setRooms] = useState([]);
+  const [newRoom, setNewRoom] = useState("");
+  const socketRef = useRef();
 
-	useEffect(
-		() => {
-			socketRef.current = io.connect("http://localhost:4000")
-			socketRef.current.on("message", ({ name, message }) => {
-				setChat([ ...chat, { name, message } ])
-			})
-			return () => socketRef.current.disconnect()
-		},
-		[ chat ]
-	)
+  useEffect(() => {
+    axios
+      .get("http://localhost:4000/api/rooms/get_rooms")
+      .then(function (response) {
+        console.log(response.data);
+        const fetchedRooms = response.data.map((room) => room.name);
+        setRooms(fetchedRooms);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }, [newRoom]);
+  useEffect(
+    () => {
+      socketRef.current = io.connect("http://localhost:4000");
+      console.log(currentRoom);
+      socketRef.current.on(`message ${currentRoom}`, ({ name, message }) => {
+        setChat([...chat, { name, message }]);
+      });
+      return () => socketRef.current.disconnect();
+    },
+    [chat],
+    currentRoom
+  );
+  const toggleUsernameModal = () => {
+    setUsernameModalState(!usernameModalState);
+  };
+  const toggleNewRoomModal = () => {
+    setNewRoomModalState(!newRoomModalState);
+  };
+  const handleChange = (e) => {
+    setState({ message: "", name: e.target.value });
+  };
+  const handleNewRoomChange = (e) => {
+    setNewRoom(e.target.value);
+  };
+  const onTextChange = (e) => {
+    setState({ ...state, [e.target.name]: e.target.value });
+  };
 
-	const onTextChange = (e) => {
-		setState({ ...state, [e.target.name]: e.target.value })
-	}
+  const onMessageSubmit = (e) => {
+    const { name, message } = state;
 
-	const onMessageSubmit = (e) => {
-		const { name, message } = state
-		socketRef.current.emit("message", { name, message })
-		e.preventDefault()
-		setState({ message: "", name })
-	}
+    socketRef.current.emit("message", { name, message, currentRoom });
+    e.preventDefault();
+    setState({ message: "", name });
+  };
+  const addRoom = (newRoom) => {
+    var newRooms = rooms.concat(newRoom);
+    setRooms(newRooms);
 
-	const renderChat = () => {
-		return chat.map(({ name, message }, index) => (
-			<div key={index}>
-				<h3>
-					{name}: <span>{message}</span>
-				</h3>
-			</div>
-		))
-	}
+    axios
+      .post("http://localhost:4000/api/rooms/create_room", {
+        name: newRoom,
+      })
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+  const renderChat = () => {
+    return chat.map(({ name, message }, index) => (
+      <div key={index}>
+        <h3>
+          {name}: <span>{message}</span>
+        </h3>
+      </div>
+    ));
+  };
+  const renderRooms = () => {
+    return rooms.map((room, index) => (
+      <div key={index}>
+        <Button
+          active={room === currentRoom}
+          color="primary"
+          onClick={() => {
+            setCurrentRoom(room);
+            setChat([]);
+          }}
+          outline
+          size="lg"
+        >
+          {room}
+        </Button>
+      </div>
+    ));
+  };
+  return (
+    <div>
+      <Modal isOpen={usernameModalState} toggle={toggleUsernameModal}>
+        <ModalHeader toggle={toggleUsernameModal}>
+          Welcome to the Chats app
+        </ModalHeader>
+        <ModalBody>
+          Choose a cool nickname to chat with other users
+          <br />
+          <br />
+          <Input placeholder="nickname" onChange={handleChange} />
+        </ModalBody>
 
-	return (
-		<div className="card">
-			<form onSubmit={onMessageSubmit}>
-				<h1>Messenger</h1>
-				<div className="name-field">
-					<TextField name="name" onChange={(e) => onTextChange(e)} value={state.name} label="Name" />
-				</div>
-				<div>
-					<TextField
-						name="message"
-						onChange={(e) => onTextChange(e)}
-						value={state.message}
-						id="outlined-multiline-static"
-						variant="outlined"
-						label="Message"
-					/>
-				</div>
-				<button>Send Message</button>
-			</form>
-			<div className="render-chat">
-				<h1>Chat Log</h1>
-				{renderChat()}
-			</div>
-		</div>
-	)
+        <ModalFooter>
+          <Button
+            color="primary"
+            onClick={(e) => {
+              toggleUsernameModal();
+            }}
+            size="lg"
+          >
+            Chat !!
+          </Button>{" "}
+        </ModalFooter>
+      </Modal>
+      <div className="rooms">
+        <ButtonGroup>{renderRooms()}</ButtonGroup>
+        <Button color="primary" size="lg" onClick={toggleNewRoomModal}>
+          +
+        </Button>
+      </div>
+      <Modal isOpen={newRoomModalState} toggle={toggleNewRoomModal}>
+        <ModalHeader toggle={toggleNewRoomModal}>Open a new room</ModalHeader>
+        <ModalBody>
+          <Input
+            placeholder="Choose a new room name"
+            onChange={handleNewRoomChange}
+          />
+        </ModalBody>
+
+        <ModalFooter>
+          <Button
+            color="primary"
+            onClick={(e) => {
+              addRoom(newRoom);
+              toggleNewRoomModal();
+            }}
+            size="lg"
+          >
+            Create Room
+          </Button>{" "}
+        </ModalFooter>
+      </Modal>
+      <div className="render-chat">
+        <h1>Chat App</h1>
+
+        {renderChat()}
+      </div>
+      <Form onSubmit={onMessageSubmit}>
+        <Row>
+          <Col xs="9" className="test-border">
+            <TextField
+              fullWidth
+              name="message"
+              onChange={(e) => onTextChange(e)}
+              value={state.message}
+              id="outlined-multiline-static"
+              variant="outlined"
+              label="Message"
+            />
+          </Col>
+          <Col xs="3" className="test-border">
+            <Button color="primary" size="lg">
+              Send Message
+            </Button>
+          </Col>
+        </Row>
+      </Form>
+    </div>
+  );
 }
 
-export default App
-
+export default App;
