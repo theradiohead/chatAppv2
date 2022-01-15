@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 // this is supposed to be in a .env file but to facilate the use of the app i defined it here.
 mongoURL = {
-  url: "mongodb+srv://ghassen:ghassen@writers.bc5oo.mongodb.net/writers_db?retryWrites=true&w=majority",
+  url: "mongodb+srv://rihem:rihem@writers.bc5oo.mongodb.net/writers_db?retryWrites=true&w=majority",
 };
 
 const connectDB = async () => {

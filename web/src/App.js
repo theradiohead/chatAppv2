@@ -103,8 +103,8 @@ function App() {
     return rooms.map((room, index) => (
       <div key={index}>
         <Button
+          style={{ backgroundColor: "#cdb4db" }}
           active={room === currentRoom}
-          color="primary"
           onClick={() => {
             setCurrentRoom(room);
             setChat([]);
@@ -118,7 +118,7 @@ function App() {
     ));
   };
   return (
-    <div>
+    <div className="app-background">
       <Modal isOpen={usernameModalState} toggle={toggleUsernameModal}>
         <ModalHeader toggle={toggleUsernameModal}>
           Welcome to the Chats app
@@ -132,7 +132,7 @@ function App() {
 
         <ModalFooter>
           <Button
-            color="primary"
+            style={{ backgroundColor: "#e76f51" }}
             onClick={(e) => {
               toggleUsernameModal();
             }}
@@ -144,7 +144,11 @@ function App() {
       </Modal>
       <div className="rooms">
         <ButtonGroup>{renderRooms()}</ButtonGroup>
-        <Button color="primary" size="lg" onClick={toggleNewRoomModal}>
+        <Button
+          style={{ backgroundColor: "#cdb4db" }}
+          size="lg"
+          onClick={toggleNewRoomModal}
+        >
           +
         </Button>
       </div>
@@ -159,7 +163,7 @@ function App() {
 
         <ModalFooter>
           <Button
-            color="primary"
+            style={{ backgroundColor: "#e76f51" }}
             onClick={(e) => {
               addRoom(newRoom);
               toggleNewRoomModal();
@@ -189,7 +193,11 @@ function App() {
             />
           </Col>
           <Col xs="3" className="test-border">
-            <Button color="primary" size="lg">
+            <Button
+              style={{ backgroundColor: "#7f5539", color: "white" }}
+              size="lg"
+              outline
+            >
               Send Message
             </Button>
           </Col>

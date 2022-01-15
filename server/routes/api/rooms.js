@@ -15,11 +15,11 @@ router.post("/create_room", (req, res) => {
       res.status(500).send({ message: error.message });
     });
 });
-// @route  GET api/post/get_rooms
+// @route  GET api/rooms/get_rooms
 // @desc   get all rooms
 // @access Public
 router.get("/get_rooms", (req, res) => {
-  // Save Post in the database
+  // GET all rooms
 
   Room.find({})
     .select(["name"])
